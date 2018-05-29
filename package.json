@@ -4,13 +4,13 @@
   "description": "An ILP plugin for kava.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kava-labs/ilp-plugin-kava.git"
   },
-  "author": "",
+  "author": "Kava Labs",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/kava-labs/ilp-plugin-kava/issues"
@@ -18,9 +18,13 @@
   "homepage": "https://github.com/kava-labs/ilp-plugin-kava#readme",
   "dependencies": {
     "bin-protocol": "^3.0.4",
-    "ilp-plugin-payment": "0.0.1",
+    "chai": "^4.1.2",
+    "ilp-plugin-payment": "file:../ilp-plugin-payment",
     "js-wire": "0.0.3",
+    "mocha": "^5.2.0",
     "npm": "^6.1.0",
+    "request": "^2.87.0",
+    "request-promise-native": "^1.0.5",
     "ripemd160": "^2.0.2",
     "tendermint": "^3.1.8"
   }
