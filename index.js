@@ -30,10 +30,8 @@ class KavaPlugin extends PluginPayment {
 
   async sendPayment (details, amount) {
     //TODO set up LCD on server
-    
     // Get sequence number for sending account.
-    let response = await request({
-        method: 'GET',
+    let response = await request.get({
         uri: this.kavaClientURI+`/accounts/${this.address}`,
         json: true // Automatically stringifies the body to JSON
     })
@@ -41,8 +39,7 @@ class KavaPlugin extends PluginPayment {
     debug(sequenceNumber)
 
     // Send payment.
-    let paymentRequestOptions = {
-        method: 'POST',
+    let paymentPostData = {
         uri: this.kavaClientURI+`/accounts/${details.address}/send`,
         body: {
           amount: [
@@ -56,7 +53,7 @@ class KavaPlugin extends PluginPayment {
         json: true
     };
 
-    return await request(paymentRequestOptions)
+    return await request.post(paymentPostData)
   }
 
   async getPaymentDetails (userId) {
