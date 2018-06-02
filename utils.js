@@ -30,11 +30,24 @@ function base64ToBuffer (base64String) {
 }
 
 function parseAmountString (amountString) {
-  //TODO parse general cosmos sdk Coin strings
-  // Spec is in cosmos-sdk/types/coin.go Coins.String()
-  // Something like this
-  //coinString.split(',').map((s) => s.match(/([0-9]+)([^0-9]+)/))
-  return parseInt(amountString.split('kavaToken')[0])
+  // Parse general cosmos sdk Coin strings. Spec is in cosmos-sdk/types/coin.go Coins.String()
+  let coins = amountString.split(',').map(function (coinString) {
+    let regexResult = coinString.match(/(^[0-9]+)(.*)$/)
+    if (regexResult == null) {
+      throw new Error('invalid coin string')
+    }
+    let coin = {}
+    coin[regexResult[2]] = parseInt(regexResult[1])
+    return coin // {coinType: amount}
+  })
+
+  // Check the same coin name doesn't come up twice
+  let coinNames = _.flatten(coins.map(_.keys))
+  if (coinNames.length != _.uniq(coinNames).length) {
+    throw new Error('more than one instance of coin type in coin string')
+  }
+
+  return _.assign({}, ...coins)
 }
 
 module.exports = {

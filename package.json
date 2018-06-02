@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/kava-labs/ilp-plugin-kava#readme",
   "dependencies": {
+    "bignumber.js": "^7.2.1",
     "bin-protocol": "^3.0.4",
     "ilp-plugin-payment": "file:../ilp-plugin-payment",
     "js-wire": "0.0.3",

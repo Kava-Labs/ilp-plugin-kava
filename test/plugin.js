@@ -5,7 +5,7 @@ const nock = require('nock')
 
 const KavaPlugin = require('../index.js')
 
-describe('plugin.sendPayment', function () {
+describe('Plugin sendPayment', function () {
   it('calls the correct endpoints', async function () {
     let kavaClientURI = 'http://localhost:1317'
     let fromAddress = 'BA77CDE4E719539FFEF0852E886C4B085C4F4208'
@@ -99,8 +99,38 @@ describe('plugin.sendPayment', function () {
   })
 })
 
-describe('txEventHandler', function () {
-  it('emits a money event when there is a relevant transaction', function () {
-    expect(true).to.be.true
+describe('Plugin txEventHandler', function () {
+  it('emits a money event when there is a relevant transaction', function (done) {
+    let kp = new KavaPlugin({address: 'CFCA4251FB4890778C8EDBAFDA81DF50A2155543'})
+    
+    kp.on('money', () => {
+      done()
+    })
+    
+    kp.txEventHandler({
+      TxResult: {
+        result: {
+          tags: [
+            {
+              "key": "c2VuZGVy",
+              "value": "lffX5w8mKSeoFzm0JoxT7BuwGBM="
+            },
+            {
+              "key": "YW1vdW50",
+              "value": "MTBrYXZhVG9rZW4="
+            },
+            {
+              "key": "cmVjaXBpZW50",
+              "value": "z8pCUftIkHeMjtuv2oHfUKIVVUM="
+            },
+            {
+              "key": "YW1vdW50",
+              "value": "MTBrYXZhVG9rZW4="
+            }
+          ]
+        }
+      }
+    })
+    
   })
 })

@@ -1,5 +1,6 @@
 const debug = require('debug')('ilp-plugin-kava')
 const request = require('request-promise-native')
+const BigNumber = require('bignumber.js')
 const PluginPayment = require('ilp-plugin-payment')
 const { RpcClient } = require('tendermint')
 
@@ -65,13 +66,23 @@ class KavaPlugin extends PluginPayment {
   async txEventHandler (response) {
     let tags = utils.extractTxTags(response)
     
-    //TODO check interpretation of userID is correct
-    //TODO check recipient and address have same format, maybe convert to make sure?
-    //TODO make sure amount is typed properly, use assetScale
-    //TODO check tx is valid - address is this one AND only one sender, receiver, (kava) amount
+    let senders = tags.filter((tag) => tag.key == "sender").map((tag) => tag.value)
+    let recipients = tags.filter((tag) => tag.key == "recipient").map((tag) => tag.value)
+    let coins = tags.filter((tag) => tag.key == "amount").map((tag) => tag.value)
     
-    if (txValid) {
-      this.emit('money', this.address, new BigNumber(tags.amount).times(1e6).toString())
+    // allow only txs with one sender and reciever
+    if (senders.length == 1 && recipients.length == 1) {
+      // check this plugin's account is the destination
+      if (recipients.includes(this.address.toUpperCase())) {
+        // check amount is kavaToken
+        if (coins.length > 0 && coins[0].kavaToken != undefined) {
+          // TODO Check it came from existing user. Otherwise this will fire for any transfer to this plugin's account
+          if (true) {
+            //TODO use assetScale
+            this.emit('money', senders[0], new BigNumber(coins[0].kavaToken).toString())
+          }
+        }
+      }
     }
   }
 }

@@ -35,7 +35,7 @@ describe("Utils", function () {
       },
       {
         key: "amount",
-        value: 10
+        value: {'kavaToken': 10}
       },
       {
         key: "recipient",
@@ -43,7 +43,7 @@ describe("Utils", function () {
       },
       {
         key: "amount",
-        value: 10
+        value: {'kavaToken': 10}
       }
     ]
     
@@ -52,6 +52,17 @@ describe("Utils", function () {
   })
   
   it("parses amount strings correctly", function () {
-    expect(utils.parseAmountString('100kavaToken')).to.equal(100)
+    expect(utils.parseAmountString('100steak')).to.deep.equal({steak: 100})
+    expect(utils.parseAmountString('100kavaToken')).to.deep.equal({kavaToken: 100})
+    expect(utils.parseAmountString('12.34kavaToken')).to.deep.equal({'.34kavaToken': 12}) // no support for floats
+    expect(utils.parseAmountString('100kavaToken,10steak')).to.deep.equal({kavaToken: 100, steak: 10})
+    expect(utils.parseAmountString('0kavaToken')).to.deep.equal({kavaToken: 0})
+    expect(utils.parseAmountString('123abc456xwyz')).to.deep.equal({abc456xwyz: 123})
+    expect(utils.parseAmountString('123')).to.deep.equal({'': 123})
+  })
+  it("raises on invalid amount strings", function () {
+    expect(() => utils.parseAmountString('kavaToken')).to.throw
+    expect(() => utils.parseAmountString('')).to.throw
+    expect(() => utils.parseAmountString('10kavaToken,45kavaToken')).to.throw
   })
 })
