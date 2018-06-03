@@ -1,9 +1,9 @@
 const expect    = require('chai').expect
-const utils = require('../utils.js')
+const utils = require('../src/utils.js')
 
 describe("Utils", function () {
+  
   it("extracts tags correctly", function () {
-    //TODO fill in details
     let response = {
       TxResult: {
         result: {
@@ -60,6 +60,7 @@ describe("Utils", function () {
     expect(utils.parseAmountString('123abc456xwyz')).to.deep.equal({abc456xwyz: 123})
     expect(utils.parseAmountString('123')).to.deep.equal({'': 123})
   })
+  
   it("raises on invalid amount strings", function () {
     expect(() => utils.parseAmountString('kavaToken')).to.throw
     expect(() => utils.parseAmountString('')).to.throw

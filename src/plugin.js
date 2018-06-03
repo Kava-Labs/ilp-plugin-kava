@@ -6,45 +6,68 @@ const { RpcClient } = require('tendermint')
 
 const utils = require('./utils.js')
 
+
 class KavaPlugin extends PluginPayment {
   constructor (opts) {
-    //TODO fill out all opts here
+    // kavaNodeURI: url:port web socket url for tendermint rpc server
+    // kavaClientURI: http url for light client rest server
+    
+    // address: on chain address of kava account
+    // kavaAccountName: light client name associated with address
+    // kavaAccountPassword: light client password associated with address
+    
     // role: client|server
-    // address: kavaAddress
-    // kavaNodeURI: url:port
-    // kavaAccountName
-    // kavaAccountPassword
-    // kavaClientURI
+    
+    // if role == 'client'
+    // reconnectInterval: optional
+    // server: btp+ws url for server plugin
+    //TODO check to make sure listener isn't passed otherwise this tries to setup as a server plugin
+    
+    //if role == 'server'
+    // settleTo: string of a number, default '0', what to settle balances to
+    // settleThreshold: string of a number, when to settle, balance is how much this plugin is owed, TODO verify always negative (for now)
+    
+    // wsOpts: defaults to {port: 3000}, passed to WebSocket.Server()
+    
+    // currencyScale: not used
+    // _log
+    // _store
+    // allowedOrigins
+    // debugHostIldcpInfo
     super(opts)
-    this.kavaNode = RpcClient(opts.kavaNodeURI || 'ws://kava.connector.kava.io:46657')
-    this.address = opts.address
+    this.kavaNodeURI = opts.kavaNodeURI || 'ws://kava.connector.kava.io:46657'
+    this.kavaClientURI = opts.kavaClientURI
+    //TODO change "address" to something less ambiguous
+    this.address = opts.address //TODO verify presence, otherwise plugin.sendMoney errors obscurely
     this.kavaAccountName = opts.kavaAccountName
     this.kavaAccountPassword = opts.kavaAccountPassword
-    this.kavaClientURI = opts.kavaClientURI
+    
   }
 
   async connectPayment () {
     //TODO setup account through LCD if not there already
-    await this.kavaNode.subscribe({query: "tm.event='Tx'"}, this.txEventHandler)
+    this.kavaNode = RpcClient(this.kavaNodeURI)
+    await this.kavaNode.subscribe({query: "tm.event='Tx'"}, this.txEventHandler.bind(this))
     debug('Succesfully subscribed to Kava node.')
   }
 
   async sendPayment (details, amount) {
-    //TODO set up LCD on server
+    debug('sending payment')
+
     // Get sequence number for sending account.
     let response = await request.get({
         uri: this.kavaClientURI+`/accounts/${this.address}`,
         json: true // Automatically stringifies the body to JSON
     })
     let sequenceNumber = parseInt(response.value.sequence)
-    debug(sequenceNumber)
+    
 
     // Send payment.
     let paymentPostData = {
         uri: this.kavaClientURI+`/accounts/${details.address}/send`,
         body: {
           amount: [
-            {denom: "kavaToken", "amount": amount}
+            {denom: "kavaToken", "amount": parseInt(amount)}
           ],
           name: this.kavaAccountName,
           password: this.kavaAccountPassword,
@@ -58,6 +81,7 @@ class KavaPlugin extends PluginPayment {
   }
 
   async getPaymentDetails (userId) {
+    debug('sending back details')
     return {
       address: this.address
     }
