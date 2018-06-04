@@ -17,7 +17,7 @@ describe('Plugin sendPayment', function () {
     let amount = 10
     
     kp = new KavaPlugin({
-      address: fromAddress,
+      kavaAddress: fromAddress,
       kavaClientURI: kavaClientURI,
       kavaAccountName: accountName,
       kavaAccountPassword: accountPassword,
@@ -28,7 +28,7 @@ describe('Plugin sendPayment', function () {
       .reply(200, {
         type:"6C54F73C9F2E08",
         value:{
-          address: fromAddress,
+          kavaAddress: fromAddress,
           coins:[
             {denom:"kavaToken",amount:970},
             {denom:"steak","amount":50}
@@ -53,7 +53,7 @@ describe('Plugin sendPayment', function () {
         })
         .reply(200)
       
-      await kp.sendPayment({address: toAddress}, amount) // no required return value
+      await kp.sendPayment({kavaAddress: toAddress}, amount) // no required return value
       
       getSequenceCall.done() // throws an assertion error if the endpoint was not called
       sendMoneyCall.done()
@@ -69,7 +69,7 @@ describe('Plugin sendPayment', function () {
     let amount = 10
     
     kp = new KavaPlugin({
-      address: fromAddress,
+      kavaAddress: fromAddress,
       kavaClientURI: kavaClientURI,
       kavaAccountName: accountName,
       kavaAccountPassword: accountPassword,
@@ -97,13 +97,13 @@ describe('Plugin sendPayment', function () {
       .post(`/accounts/${toAddress}/send`)
       .reply(500)
       
-    expect(kp.sendPayment({address: toAddress}, amount)).to.be.rejected
+    expect(kp.sendPayment({kavaAddress: toAddress}, amount)).to.be.rejected
   })
 })
 
 describe('Plugin txEventHandler', function () {
   it('emits a money event when there is a relevant transaction', function (done) {
-    let kp = new KavaPlugin({address: 'CFCA4251FB4890778C8EDBAFDA81DF50A2155543'})
+    let kp = new KavaPlugin({kavaAddress: 'CFCA4251FB4890778C8EDBAFDA81DF50A2155543'})
     
     kp.on('money', () => {
       done()

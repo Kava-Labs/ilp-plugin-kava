@@ -13,9 +13,9 @@ class KavaPlugin extends PluginPayment {
     
     // kavaNodeURI: 'ws://domain:port' web socket url for rpc server
     // kavaClientURI: http url for light client rest server
-    // address: on chain address of kava account
-    // kavaAccountName: light client name associated with address
-    // kavaAccountPassword: light client password associated with address
+    // kavaAddress: on chain address of kava account
+    // kavaAccountName: light client name associated with kavaAddress
+    // kavaAccountPassword: light client password associated with kavaAddress
     
     // role: 'client' or 'server'
     
@@ -40,11 +40,16 @@ class KavaPlugin extends PluginPayment {
         throw new Error('settleThreshold must be less than or equal to 0')
       }
     }
+    // Verifying presence of kavaAddress, otherwise plugin.sendMoney errors obscurely.
+    //TODO make plugin.sendMoney not error obscurely
+    if (!opts.kavaAddress) {
+      throw new Error('kavaAddress must be specified')
+    }
+    
     super(opts)
     this.kavaNodeURI = opts.kavaNodeURI
     this.kavaClientURI = opts.kavaClientURI
-    //TODO change "address" to something less ambiguous
-    this.address = opts.address //TODO verify presence, otherwise plugin.sendMoney errors obscurely
+    this.kavaAddress = opts.kavaAddress
     this.kavaAccountName = opts.kavaAccountName
     this.kavaAccountPassword = opts.kavaAccountPassword
     
@@ -62,7 +67,7 @@ class KavaPlugin extends PluginPayment {
 
     // Get sequence number for sending account.
     let response = await request.get({
-        uri: this.kavaClientURI+`/accounts/${this.address}`,
+        uri: this.kavaClientURI+`/accounts/${this.kavaAddress}`,
         json: true // Automatically stringifies the body to JSON
     })
     let sequenceNumber = parseInt(response.value.sequence)
@@ -70,7 +75,7 @@ class KavaPlugin extends PluginPayment {
 
     // Send payment.
     let paymentPostData = {
-        uri: this.kavaClientURI+`/accounts/${details.address}/send`,
+        uri: this.kavaClientURI+`/accounts/${details.kavaAddress}/send`,
         body: {
           amount: [
             {denom: "kavaToken", "amount": parseInt(amount)}
@@ -89,7 +94,7 @@ class KavaPlugin extends PluginPayment {
   async getPaymentDetails (userId) {
     debug('sending back details')
     return {
-      address: this.address
+      kavaAddress: this.kavaAddress
     }
   }
   
@@ -103,7 +108,7 @@ class KavaPlugin extends PluginPayment {
     // allow only txs with one sender and reciever
     if (senders.length == 1 && recipients.length == 1) {
       // check this plugin's account is the destination
-      if (recipients.includes(this.address.toUpperCase())) {
+      if (recipients.includes(this.kavaAddress.toUpperCase())) {
         // check amount is kavaToken
         if (coins.length > 0 && coins[0].kavaToken != undefined) {
           // TODO Check it came from existing user. Otherwise this will fire for any transfer to this plugin's account
