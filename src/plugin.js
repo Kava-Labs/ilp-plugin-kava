@@ -9,33 +9,39 @@ const utils = require('./utils.js')
 
 class KavaPlugin extends PluginPayment {
   constructor (opts) {
-    // kavaNodeURI: url:port web socket url for tendermint rpc server
-    // kavaClientURI: http url for light client rest server
+    // Available Options:
     
+    // kavaNodeURI: 'ws://domain:port' web socket url for rpc server
+    // kavaClientURI: http url for light client rest server
     // address: on chain address of kava account
     // kavaAccountName: light client name associated with address
     // kavaAccountPassword: light client password associated with address
     
-    // role: client|server
+    // role: 'client' or 'server'
     
     // if role == 'client'
-    // reconnectInterval: optional
-    // server: btp+ws url for server plugin
-    //TODO check to make sure listener isn't passed otherwise this tries to setup as a server plugin
+    // server: url for server plugin
+    // reconnectInterval: optional - the interval on which the plugin tries to reconnect
     
     //if role == 'server'
-    // settleTo: string of a number, default '0', what to settle balances to
-    // settleThreshold: string of a number, when to settle, balance is how much this plugin is owed, TODO verify always negative (for now)
+    // settleTo: string of a number, default '0', what to settle client balances to
+    // settleThreshold: string of a number, when to settle, balance is how much this plugin is owed.
+    // port: optional, defaults to 3000, port this plugin listens on
+    // wsOpts: optional, defaults to {port: opt.port}, overides port option, passed to WebSocket.Server()
+    // _store: an ilp-store to persist client details
+    // currencyScale: not currently used
+    // allowedOrigins - optional
+    // _log - optional
+    // debugHostIldcpInfo - for debugging
     
-    // wsOpts: defaults to {port: 3000}, passed to WebSocket.Server()
-    
-    // currencyScale: not used
-    // _log
-    // _store
-    // allowedOrigins
-    // debugHostIldcpInfo
+    //TODO move this check to ilp-plugin-payment
+    if (opts.settleThreshold) {
+      if (parseInt(opts.settleThreshold) > 0) {
+        throw new Error('settleThreshold must be less than or equal to 0')
+      }
+    }
     super(opts)
-    this.kavaNodeURI = opts.kavaNodeURI || 'ws://kava.connector.kava.io:46657'
+    this.kavaNodeURI = opts.kavaNodeURI
     this.kavaClientURI = opts.kavaClientURI
     //TODO change "address" to something less ambiguous
     this.address = opts.address //TODO verify presence, otherwise plugin.sendMoney errors obscurely
@@ -102,7 +108,7 @@ class KavaPlugin extends PluginPayment {
         if (coins.length > 0 && coins[0].kavaToken != undefined) {
           // TODO Check it came from existing user. Otherwise this will fire for any transfer to this plugin's account
           if (true) {
-            //TODO use assetScale
+            //TODO use currencyScale
             this.emit('money', senders[0], new BigNumber(coins[0].kavaToken).toString())
           }
         }
