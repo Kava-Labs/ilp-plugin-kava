@@ -18,6 +18,7 @@
   "homepage": "https://github.com/kava-labs/ilp-plugin-kava#readme",
   "dependencies": {
     "bignumber.js": "^7.2.1",
+    "ilp-plugin-payment": "github:kava-labs/ilp-plugin-payment",
     "lodash": "^4.17.10",
     "npm": "^6.1.0",
     "request": "^2.87.0",
