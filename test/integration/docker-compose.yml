@@ -1,0 +1,20 @@
+version: '3'
+services:
+  gaiad:
+    image: kava/cosmos-sdk:ilp-demo
+    command: ["gaiad", "start"]
+    ports:
+      - 46657:46657
+    volumes:
+      - ./.gaiad:/root/.gaiad
+      - ./.gaiacli:/root/.gaiacli
+    logging:
+      driver: "none"
+  lcd:
+    image: kava/cosmos-sdk:ilp-demo
+    command: "gaiacli rest-server --chain-id kava --node gaiad:46657 --laddr tcp://0.0.0.0:1317"
+    ports:
+      - 1317:1317
+    volumes:
+      - ./.gaiad:/root/.gaiad
+      - ./.gaiacli:/root/.gaiacli
