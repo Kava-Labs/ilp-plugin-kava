@@ -9,7 +9,7 @@ const KavaPlugin = require('../..')
 const IlpPacket = require('ilp-packet')
 
 /*
-  These tests require a kava node and light client running on localhost, on ports 46657 and 1317 repectively.
+  These tests require a kava node and light client running somewhere, on ports 46657 and 1317 repectively.
   They also require accounts to be set up on the light client.
 */
 
@@ -24,7 +24,8 @@ async function getAccountBalance(kavaClientURI, kavaAddress) {
 }
 
 
-describe('Test minimal plugin API.', function () {
+describe('Minimal Plugin API.', function () {
+  this.timeout(20*1000) // slow internet allowance
   
   before(async function () {
     let port = await getPort()
@@ -32,11 +33,11 @@ describe('Test minimal plugin API.', function () {
     this.serverPlugin = new KavaPlugin({
       role: 'server',
       port: port,
-      kavaNodeURI: 'ws://localhost:46657',
-      kavaClientURI: 'http://localhost:1317',
+      kavaNodeURI: 'ws://kvd.connector.kava.io:46657',
+      kavaClientURI: 'http://kvcli.connector.kava.io:1317',
       kavaAccountName: 'validator',
       kavaAccountPassword: 'password',
-      kavaAddress: '4AF13FDB4DC0FF2D8D09F39527C3141E0DCC3B77',
+      kavaAddress: 'C6DE0B42B50F37CCB47D167166628741AD7FE7C5',
       currencyScale: 1,
       settleThreshold: 0,
       _store: new Store()
@@ -51,11 +52,11 @@ describe('Test minimal plugin API.', function () {
     this.clientPlugin = new KavaPlugin({
       role: 'client',
       server: `btp+ws://${this.clientUsername}:password@localhost:${port}`,
-      kavaNodeURI: 'ws://localhost:46657',
-      kavaClientURI: 'http://localhost:1317',
+      kavaNodeURI: 'ws://kvd.connector.kava.io:46657',
+      kavaClientURI: 'http://kvcli.connector.kava.io:1317',
       kavaAccountName: 'user1',
       kavaAccountPassword: 'password',
-      kavaAddress: 'A95031C2A61EB47212F725EA342B52BA8DB1B344',
+      kavaAddress: '5AA8D4F6241BA6796FC73EC3D55C7CF77B5F33CF',
     })
     //this.clientPlugin.registerDataHandler((data) => Promise.resolve(`thanks for ${data}`))
   })
@@ -73,9 +74,6 @@ describe('Test minimal plugin API.', function () {
   })
   
   it('client sends money', async function () {
-    // Set the timeout for this test.
-    this.timeout(5000)
-    
     // Get current balance of server plugin kava account.
     let previousBalance = await getAccountBalance(this.serverPlugin.kavaClientURI, this.serverPlugin.kavaAddress)
     
@@ -107,7 +105,7 @@ describe('Test minimal plugin API.', function () {
     let fulfillmentPacket = IlpPacket.serializeIlpFulfillment({
       data: new Buffer.alloc(0)
     })
-    this.serverPlugin.deregisterMoneyHandler()
+
     this.serverPlugin.deregisterDataHandler()
     this.serverPlugin.registerDataHandler((data) => fulfillmentPacket)
     
@@ -140,7 +138,6 @@ describe('Test minimal plugin API.', function () {
   })
   
   it('server settles money', async function () {
-    this.timeout(5000)
     //TODO this might conflict with the above test, split up tests
     
     // Get current balance
