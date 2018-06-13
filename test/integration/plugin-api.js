@@ -13,9 +13,10 @@ const IlpPacket = require('ilp-packet')
   They also require accounts to be set up on the light client.
 */
 
-const timeout = ms => new Promise(res => setTimeout(res, ms))
+const asyncSleep = ms => new Promise(res => setTimeout(res, ms))
 
 async function getAccountBalance(kavaClientURI, kavaAddress) {
+  // Fetch the balance of a kava address from the light client.
   let response = await request.get({
     uri: kavaClientURI+`/accounts/${kavaAddress}`,
     json: true
@@ -85,7 +86,7 @@ describe('Minimal Plugin API.', function () {
     let sendMoneyResponse = await this.clientPlugin.sendMoney(amountToSend)
     
     // wait until transaction has gone through
-    await timeout(3000)
+    await asyncSleep(3000)
     
     // Get new balance of server plugin kava account.
     let newBalance = await getAccountBalance(this.serverPlugin.kavaClientURI, this.serverPlugin.kavaAddress)
@@ -102,15 +103,16 @@ describe('Minimal Plugin API.', function () {
       destination: 'test.blarg',
       data: new Buffer.alloc(0) //empty buffer
     })
-    let fulfillmentPacket = IlpPacket.serializeIlpFulfillment({
+    let fulfillPacket = IlpPacket.serializeIlpFulfill({
+      fulfillment: new Buffer.alloc(32), // IlpPacket requires 32 bytes buffers as fulfillments
       data: new Buffer.alloc(0)
     })
 
     this.serverPlugin.deregisterDataHandler()
-    this.serverPlugin.registerDataHandler((data) => fulfillmentPacket)
+    this.serverPlugin.registerDataHandler((data) => fulfillPacket)
     
     response = await this.clientPlugin.sendData(preparePacket)
-    expect(response).to.deep.equal(fulfillmentPacket)
+    expect(response).to.deep.equal(fulfillPacket)
   })
   
   it('client fetches ilp address from server', async function () {
@@ -126,15 +128,16 @@ describe('Minimal Plugin API.', function () {
       destination: `${this.serverIlpAddress}.${this.clientUsername}`,
       data: new Buffer.alloc(0) //empty buffer
     })
-    let fulfillmentPacket = IlpPacket.serializeIlpFulfillment({
+    let fulfillPacket = IlpPacket.serializeIlpFulfill({
+      fulfillment: new Buffer.alloc(32), // IlpPacket requires 32 bytes buffers as fulfillments
       data: new Buffer.alloc(0)
     })
     this.clientPlugin.deregisterMoneyHandler()
     this.clientPlugin.deregisterDataHandler()
-    this.clientPlugin.registerDataHandler((data) => fulfillmentPacket)
+    this.clientPlugin.registerDataHandler((data) => fulfillPacket)
     
     response = await this.serverPlugin.sendData(preparePacket)
-    expect(response).to.deep.equal(fulfillmentPacket)
+    expect(response).to.deep.equal(fulfillPacket)
   })
   
   it('server settles money', async function () {
@@ -152,18 +155,19 @@ describe('Minimal Plugin API.', function () {
       destination: `${this.serverIlpAddress}.${this.clientUsername}`,
       data: new Buffer.alloc(0) //empty buffer
     })
-    let fulfillmentPacket = IlpPacket.serializeIlpFulfillment({
-      data: new Buffer.alloc(0) //empty buffer
+    let fulfillPacket = IlpPacket.serializeIlpFulfill({
+      fulfillment: new Buffer.alloc(32), // IlpPacket requires 32 bytes buffers as fulfillments
+      data: new Buffer.alloc(0)
     })
     this.clientPlugin.deregisterMoneyHandler()
     this.clientPlugin.registerMoneyHandler(async () => {}) // don't need to return anything, probably
     this.clientPlugin.deregisterDataHandler()
-    this.clientPlugin.registerDataHandler((data) => fulfillmentPacket)
+    this.clientPlugin.registerDataHandler((data) => fulfillPacket)
     
     response = await this.serverPlugin.sendData(preparePacket)
     
     // wait until the transaction has gone through
-    await timeout(3000)
+    await asyncSleep(3000)
     
     // Get new balance
     let newBalance = await getAccountBalance(this.clientPlugin.kavaClientURI, this.clientPlugin.kavaAddress)
