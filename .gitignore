@@ -63,3 +63,7 @@ typings/
 #gaia data folders
 .gaiad/
 .gaiacli/
+
+# text editor files
+*.sublime-project
+*.sublime-workspace
