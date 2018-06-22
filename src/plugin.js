@@ -65,12 +65,13 @@ class KavaPlugin extends PluginPayment {
   async sendPayment (details, amount) {
     debug('sending payment')
 
-    // Get sequence number for sending account.
+    // Get sequence and account number for sending account.
     let response = await request.get({
         uri: this.kavaClientURI+`/accounts/${this.kavaAddress}`,
         json: true // Automatically stringifies the body to JSON
     })
     let sequenceNumber = parseInt(response.value.sequence)
+    let accountNumber = parseInt(response.value.account_number)
     
 
     // Send payment.
@@ -78,12 +79,13 @@ class KavaPlugin extends PluginPayment {
         uri: this.kavaClientURI+`/accounts/${details.kavaAddress}/send`,
         body: {
           amount: [
-            {denom: "kavaToken", "amount": parseInt(amount)}
+            {denom: "KVA", amount: parseInt(amount)}
           ],
           name: this.kavaAccountName,
           password: this.kavaAccountPassword,
-          chain_id: 'kava',
+          chain_id: 'test-kava',
           sequence: sequenceNumber,
+          account_number: accountNumber,
         },
         json: true
     };
@@ -99,26 +101,44 @@ class KavaPlugin extends PluginPayment {
   }
   
   async txEventHandler (response) {
-    let tags = utils.extractTxTags(response)
-    
-    let senders = tags.filter((tag) => tag.key == "sender").map((tag) => tag.value)
-    let recipients = tags.filter((tag) => tag.key == "recipient").map((tag) => tag.value)
-    let coins = tags.filter((tag) => tag.key == "amount").map((tag) => tag.value)
-    
+    debug("received transaction")
+    let tx = await this.decodeTx(response.TxResult.tx)
+    let inputs = tx.value.msg.value.inputs
+    let outputs = tx.value.msg.value.outputs
+
+    // Constrain the transaction types to those with only one input and one output.
+    // Then the coins on the input must be the same as the coins on the output.
+    // TODO refactor tx into class.
+    // TODO add warning when tx recieved but blocked by filters
+
     // allow only txs with one sender and reciever
-    if (senders.length == 1 && recipients.length == 1) {
+    if (inputs.length == 1 && outputs.length == 1) {
       // check this plugin's account is the destination
-      if (recipients.includes(this.kavaAddress.toUpperCase())) {
-        // check amount is kavaToken
-        if (coins.length > 0 && coins[0].kavaToken != undefined) {
+      if (utils.convertHexToBech32(outputs[0].address, "cosmosaccaddr") == this.kavaAddress) {
+        // check amount is KVA
+        if (outputs[0].coins.map((c) => c.denom).includes("KVA")) {
           // TODO Check it came from existing user. Otherwise this will fire for any transfer to this plugin's account
           if (true) {
             //TODO use currencyScale
-            this.emit('money', senders[0], new BigNumber(coins[0].kavaToken).toString())
+            debug("emitting 'money' event")
+            let totalKVA = outputs[0].coins.map((c) => parseInt(c.amount)).reduce((a, b) => a + b, 0)
+            this.emit('money', inputs[0].address, new BigNumber(totalKVA).toString())
           }
         }
       }
     }
+  }
+
+  async decodeTx(txbase64) {
+    // Decode tx using client api as amino encoding only exists in go right now.
+    let postData = {
+        uri: this.kavaClientURI+"/decode_tx",
+        body: {
+          txbase64: txbase64
+        },
+        json: true
+    };
+    return await request.post(postData)
   }
 }
 

@@ -66,4 +66,9 @@ describe("Utils", function () {
     expect(() => utils.parseAmountString('')).to.throw
     expect(() => utils.parseAmountString('10kavaToken,45kavaToken')).to.throw
   })
+
+  it("converts a hex to bech32 string", function () {
+    let convertedString = utils.convertHexToBech32("1B801E870D2539BB2CA0195579E8343040458C9B", "cosmosaccaddr")
+    expect(convertedString).to.equal("cosmosaccaddr1rwqpapcdy5umkt9qr92hn6p5xpqytrymunp4mu")
+  })
 })
