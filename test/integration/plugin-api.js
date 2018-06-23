@@ -21,7 +21,18 @@ async function getAccountBalance(kavaClientURI, kavaAddress) {
     uri: kavaClientURI+`/accounts/${kavaAddress}`,
     json: true
   })
-  return response.value.coins.filter((coin) => coin.denom == 'kavaToken')[0].amount
+  return response.value.coins.filter((coin) => coin.denom == 'KVA')[0].amount
+}
+
+var serviceParams = {
+  kavaNodeURI: 'ws://localhost:46657',
+  kavaClientURI: 'http://localhost:1317',
+  user1AccountName: 'user1',
+  user1AccountPassword: 'password',
+  user1Address: 'cosmosaccaddr178u6uguaafh66qz6pwe95jgxnwt57qhke50da4', // user1
+  user2AccountName: 'validator',
+  user2AccountPassword: 'password',
+  user2Address: 'cosmosaccaddr1rwqpapcdy5umkt9qr92hn6p5xpqytrymunp4mu', // validator
 }
 
 
@@ -31,14 +42,15 @@ describe('Minimal Plugin API.', function () {
   before(async function () {
     let port = await getPort()
     this.serverIlpAddress = 'test'
+    // User 2
     this.serverPlugin = new KavaPlugin({
       role: 'server',
       port: port,
-      kavaNodeURI: 'ws://kvd.connector.kava.io:46657',
-      kavaClientURI: 'http://kvcli.connector.kava.io:1317',
-      kavaAccountName: 'validator',
-      kavaAccountPassword: 'password',
-      kavaAddress: 'C6DE0B42B50F37CCB47D167166628741AD7FE7C5',
+      kavaNodeURI: serviceParams.kavaNodeURI,
+      kavaClientURI: serviceParams.kavaClientURI,
+      kavaAccountName: serviceParams.user2AccountName,
+      kavaAccountPassword: serviceParams.user2AccountPassword,
+      kavaAddress: serviceParams.user2Address,
       currencyScale: 1,
       settleThreshold: 0,
       _store: new Store()
@@ -49,17 +61,17 @@ describe('Minimal Plugin API.', function () {
       assetCode: 'KVA',
     })))
     
-    this.clientUsername = 'user'
+    // User 1
+    this.clientUsername = 'user1'
     this.clientPlugin = new KavaPlugin({
       role: 'client',
       server: `btp+ws://${this.clientUsername}:password@localhost:${port}`,
-      kavaNodeURI: 'ws://kvd.connector.kava.io:46657',
-      kavaClientURI: 'http://kvcli.connector.kava.io:1317',
-      kavaAccountName: 'user1',
-      kavaAccountPassword: 'password',
-      kavaAddress: '5AA8D4F6241BA6796FC73EC3D55C7CF77B5F33CF',
+      kavaNodeURI: serviceParams.kavaNodeURI,
+      kavaClientURI: serviceParams.kavaClientURI,
+      kavaAccountName: serviceParams.user1AccountName,
+      kavaAccountPassword: serviceParams.user1AccountPassword,
+      kavaAddress: serviceParams.user1Address,
     })
-    //this.clientPlugin.registerDataHandler((data) => Promise.resolve(`thanks for ${data}`))
   })
   
   it('server plugin connects', async function () {
