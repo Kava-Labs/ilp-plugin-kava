@@ -47,6 +47,7 @@ describe('Plugin sendPayment', function () {
         chain_id: "test-kava",
         account_number: 0,
         sequence: 0,
+        gas: 10**6
       })
       .reply(200)
       

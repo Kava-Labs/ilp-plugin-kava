@@ -86,6 +86,7 @@ class KavaPlugin extends PluginPayment {
           chain_id: 'test-kava',
           sequence: sequenceNumber,
           account_number: accountNumber,
+          gas: 10**6 // Set available gas high so it doesn't run out. TODO add fees
         },
         json: true
     };
