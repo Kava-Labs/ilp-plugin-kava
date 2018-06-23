@@ -13,6 +13,6 @@ services:
   lcd:
     build:
       context: .
-    command: "kvcli rest-server --chain-id test-kava-1 --node kvd:46657 --laddr tcp://0.0.0.0:1317"
+    command: "kvcli rest-server --chain-id test-kava --node kvd:46657 --laddr tcp://0.0.0.0:1317"
     ports:
       - 1317:1317
