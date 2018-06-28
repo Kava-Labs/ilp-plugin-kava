@@ -1,20 +1,18 @@
 version: '3'
 services:
-  gaiad:
-    image: kava/cosmos-sdk:ilp-demo
-    command: ["gaiad", "start"]
+  kvd:
+    build:
+      # build to load test data into the container
+      context: .
+    command: ["kvd", "start"]
     ports:
       - 46657:46657
-    volumes:
-      - ./.gaiad:/root/.gaiad
-      - ./.gaiacli:/root/.gaiacli
+    # Avoid printing out all the tendermint logs
     logging:
       driver: "none"
   lcd:
-    image: kava/cosmos-sdk:ilp-demo
-    command: "gaiacli rest-server --chain-id kava --node gaiad:46657 --laddr tcp://0.0.0.0:1317"
+    build:
+      context: .
+    command: "kvcli rest-server --chain-id test-kava --node kvd:46657 --laddr tcp://0.0.0.0:1317"
     ports:
       - 1317:1317
-    volumes:
-      - ./.gaiad:/root/.gaiad
-      - ./.gaiacli:/root/.gaiacli

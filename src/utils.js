@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const debug = require('debug')('ilp-plugin-kava')
-  
+const bech32 = require('bech32')
+
+// TODO Remove unsued TxTag parsing code
 function extractTxTags (response) {
   let encodedTxTags = response.TxResult.result.tags
   // encodedTxTags is an array of objects {key: 'base64String', value: 'base64String'}
@@ -50,7 +52,13 @@ function parseAmountString (amountString) {
   return _.assign({}, ...coins)
 }
 
+function convertHexToBech32(hexString, humanReadablePart) {
+  let bytes = Buffer.from(hexString, 'hex')
+  return bech32.encode(humanReadablePart, bech32.toWords(bytes))
+}
+
 module.exports = {
   extractTxTags,
-  parseAmountString
+  parseAmountString,
+  convertHexToBech32,
 }
