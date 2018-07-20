@@ -3,6 +3,7 @@ chai.use(require("chai-as-promised"))
 const expect = chai.expect
 const getPort = require('get-port')
 const request = require('request-promise-native')
+const crypto = require('crypto')
 const Store = require('ilp-store-memory')
 const ILDCP = require('ilp-protocol-ildcp')
 const KavaPlugin = require('../..')
@@ -26,7 +27,9 @@ async function getAccountBalance(kavaClientURI, kavaAddress) {
 
 var serviceParams = {
   kavaNodeURI: 'ws://localhost:46657',
+  //kavaNodeURI: 'ws://kvd.connector.kava.io:46657',
   kavaClientURI: 'http://localhost:1317',
+  //kavaClientURI: 'http://kvcli.connector.kava.io:1317',
   user1AccountName: 'user1',
   user1AccountPassword: 'password',
   user1Address: 'cosmosaccaddr178u6uguaafh66qz6pwe95jgxnwt57qhke50da4', // user1
@@ -140,16 +143,18 @@ describe('Minimal Plugin API.', function () {
       destination: `${this.serverIlpAddress}.${this.clientUsername}`,
       data: new Buffer.alloc(0) //empty buffer
     })
-    let fulfillPacket = IlpPacket.serializeIlpFulfill({
-      fulfillment: new Buffer.alloc(32), // IlpPacket requires 32 bytes buffers as fulfillments
-      data: new Buffer.alloc(0)
+    let responsePacket = IlpPacket.serializeIlpReject({
+        code: 'F07',
+        triggeredBy: '',
+        message: '',
+        data: Buffer.alloc(0)
     })
     this.clientPlugin.deregisterMoneyHandler()
     this.clientPlugin.deregisterDataHandler()
-    this.clientPlugin.registerDataHandler((data) => fulfillPacket)
+    this.clientPlugin.registerDataHandler((data) => responsePacket)
     
     response = await this.serverPlugin.sendData(preparePacket)
-    expect(response).to.deep.equal(fulfillPacket)
+    expect(response).to.deep.equal(responsePacket)
   })
   
   it('server settles money', async function () {
@@ -160,15 +165,17 @@ describe('Minimal Plugin API.', function () {
     
     // Send a prepare packet
     let amountToSend = '1'
+    let fulfillment = new Buffer.alloc(32)
+    let executionCondition = crypto.createHash('sha256').update(fulfillment).digest()
     let preparePacket = IlpPacket.serializeIlpPrepare({
       amount: amountToSend,
-      executionCondition: new Buffer.alloc(32), // IlpPacket requires 32 byte buffers as condition
+      executionCondition: executionCondition, // IlpPacket requires 32 byte buffers as condition
       expiresAt: new Date(),
       destination: `${this.serverIlpAddress}.${this.clientUsername}`,
       data: new Buffer.alloc(0) //empty buffer
     })
     let fulfillPacket = IlpPacket.serializeIlpFulfill({
-      fulfillment: new Buffer.alloc(32), // IlpPacket requires 32 bytes buffers as fulfillments
+      fulfillment: fulfillment, // IlpPacket requires 32 bytes buffers as fulfillments
       data: new Buffer.alloc(0)
     })
     this.clientPlugin.deregisterMoneyHandler()
